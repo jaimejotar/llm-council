@@ -2,6 +2,8 @@
 
 ![llmcouncil](header.jpg)
 
+> **Fork of [karpathy/llm-council](https://github.com/karpathy/llm-council).** This fork preserves the original Vibe Code MVP and extends it with configurable councils (UI), per-query cost estimation, a Windows launcher, and a `.env.example` template. See [Fork additions](#fork-additions) at the bottom for details. The rest of this README is Karpathy's original text, kept intact.
+
 The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.1, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, xAI Grok 4, eg.c), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenRouter to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
 
 In a bit more detail, here is what happens when you submit a query:
@@ -85,3 +87,67 @@ Then open http://localhost:5173 in your browser.
 - **Frontend:** React + Vite, react-markdown for rendering
 - **Storage:** JSON files in `data/conversations/`
 - **Package Management:** uv for Python, npm for JavaScript
+
+---
+
+## Fork additions
+
+This fork (`jaimejotar/llm-council`) adds the following on top of [karpathy/llm-council](https://github.com/karpathy/llm-council):
+
+### 1. Configurable councils via UI
+
+Original config required editing `backend/config.py` to change the council. This fork stores councils in `data/councils.json` (gitignored) and exposes CRUD through the UI:
+
+- **CouncilModal** — create, edit, duplicate, or delete councils (models + chairman) without touching code.
+- **NewConversationDialog** — pick which council each conversation should use.
+- Seeded with sensible defaults on first run (e.g. `exploracion_barata`, `consejo_robusto`, etc.).
+
+Endpoints added in `backend/main.py`: `GET/POST /api/councils`, `PUT/DELETE /api/councils/{id}`.
+
+### 2. Per-query cost estimation
+
+The CouncilModal shows estimated USD cost per query based on:
+
+- Static catalog of OpenRouter prices in `backend/models_catalog.py` (snapshot dated `2026-05-08` — update manually when prices change upstream).
+- Assumed typical query of **1500 input tokens + 500 output tokens** per model.
+- Sum across all members of the council.
+
+Lets you compare a "cheap exploration" council vs a "frontier" council before launching a long conversation.
+
+### 3. `start.bat` — Windows launcher
+
+Double-click `start.bat` (Windows) to open backend and frontend in separate `cmd` windows. Mirrors the behavior of `start.sh` on Linux/macOS.
+
+### 4. `.env.example` template
+
+Copy `.env.example` to `.env` and fill in your OpenRouter key. Original repo expected you to read the README to know what to set; this template documents the env var inline with links to OpenRouter pricing.
+
+### Design docs
+
+The design and implementation plan that informed the council manager live in `docs/superpowers/specs/`:
+
+- `2026-05-08-council-config-design.md`
+- `2026-05-08-council-config-plan.md`
+- `mockup-layout-options.html`
+
+## Upstream
+
+This project originates from [Andrej Karpathy's tweet](https://x.com/karpathy/status/1990577951671509438) on reading books with multiple LLMs side by side, evolved into [karpathy/llm-council](https://github.com/karpathy/llm-council). This fork extends it with the additions above.
+
+To sync with upstream changes:
+
+```bash
+git remote add upstream https://github.com/karpathy/llm-council.git
+git fetch upstream
+git merge upstream/master
+```
+
+## License
+
+Same as upstream (see [`LICENSE`](LICENSE) if present in the original repo, otherwise the project follows the spirit of "code is ephemeral" stated in the Vibe Code Alert above).
+
+## Maintainer of this fork
+
+Jaime Jiménez Ruiz — [@jaimejotar](https://github.com/jaimejotar) · [in/jaime-jimenez-ruiz](https://www.linkedin.com/in/jaime-jimenez-ruiz/) · Co-founder & CTO at [HealthTracker Analytics](https://healthtracker.ai).
+
+Fork built in [Tomé, Chile](https://en.wikipedia.org/wiki/Tom%C3%A9). `#toimprovelives`
