@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
+import CouncilModal from './components/CouncilModal';
+import NewConversationDialog from './components/NewConversationDialog';
 import { api } from './api';
 import './App.css';
 
@@ -10,9 +12,17 @@ function App() {
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load conversations on mount
+  // Council state
+  const [councils, setCouncils] = useState([]);
+  const [catalog, setCatalog] = useState([]);
+  const [councilModalOpen, setCouncilModalOpen] = useState(false);
+  const [newConvDialogOpen, setNewConvDialogOpen] = useState(false);
+
+  // Load everything on mount
   useEffect(() => {
     loadConversations();
+    loadCouncils();
+    loadCatalog();
   }, []);
 
   // Load conversation details when selected
@@ -40,14 +50,43 @@ function App() {
     }
   };
 
-  const handleNewConversation = async () => {
+  const loadCouncils = async () => {
     try {
-      const newConv = await api.createConversation();
+      const data = await api.listCouncils();
+      setCouncils(data);
+    } catch (error) {
+      console.error('Failed to load councils:', error);
+    }
+  };
+
+  const loadCatalog = async () => {
+    try {
+      const data = await api.getModelsCatalog();
+      setCatalog(data);
+    } catch (error) {
+      console.error('Failed to load catalog:', error);
+    }
+  };
+
+  // Open "New Conversation" dialog instead of creating immediately
+  const handleNewConversation = () => {
+    if (councils.length === 0) {
+      // Fallback: create directly if councils not loaded yet
+      createConversation(null);
+    } else {
+      setNewConvDialogOpen(true);
+    }
+  };
+
+  const createConversation = async (councilId) => {
+    try {
+      const newConv = await api.createConversation(councilId);
       setConversations([
-        { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
+        { id: newConv.id, created_at: newConv.created_at, title: newConv.title, message_count: 0 },
         ...conversations,
       ]);
       setCurrentConversationId(newConv.id);
+      setNewConvDialogOpen(false);
     } catch (error) {
       console.error('Failed to create conversation:', error);
     }
@@ -55,6 +94,38 @@ function App() {
 
   const handleSelectConversation = (id) => {
     setCurrentConversationId(id);
+  };
+
+  // Council CRUD handlers
+  const handleSaveCouncil = async (council) => {
+    try {
+      if (council.id && !council.id.startsWith('_new')) {
+        await api.updateCouncil(council.id, {
+          name: council.name,
+          models: council.models,
+          chairman: council.chairman,
+        });
+      } else {
+        await api.createCouncil({
+          name: council.name,
+          models: council.models,
+          chairman: council.chairman,
+        });
+      }
+      await loadCouncils();
+    } catch (error) {
+      console.error('Failed to save council:', error);
+      alert(error.message);
+    }
+  };
+
+  const handleDeleteCouncil = async (councilId) => {
+    try {
+      await api.deleteCouncil(councilId);
+      await loadCouncils();
+    } catch (error) {
+      console.error('Failed to delete council:', error);
+    }
   };
 
   const handleSendMessage = async (content) => {
@@ -151,12 +222,10 @@ function App() {
             break;
 
           case 'title_complete':
-            // Reload conversations to get updated title
             loadConversations();
             break;
 
           case 'complete':
-            // Stream complete, reload conversations list
             loadConversations();
             setIsLoading(false);
             break;
@@ -172,7 +241,6 @@ function App() {
       });
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Remove optimistic messages on error
       setCurrentConversation((prev) => ({
         ...prev,
         messages: prev.messages.slice(0, -2),
@@ -188,11 +256,32 @@ function App() {
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
+        onOpenCouncilModal={() => setCouncilModalOpen(true)}
       />
       <ChatInterface
         conversation={currentConversation}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
+      />
+
+      <CouncilModal
+        isOpen={councilModalOpen}
+        onClose={() => setCouncilModalOpen(false)}
+        councils={councils}
+        catalog={catalog}
+        onSave={handleSaveCouncil}
+        onDelete={handleDeleteCouncil}
+      />
+
+      <NewConversationDialog
+        isOpen={newConvDialogOpen}
+        councils={councils}
+        onConfirm={createConversation}
+        onCancel={() => setNewConvDialogOpen(false)}
+        onOpenCouncilModal={() => {
+          setNewConvDialogOpen(false);
+          setCouncilModalOpen(true);
+        }}
       />
     </div>
   );

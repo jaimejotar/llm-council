@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import './Sidebar.css';
 
 export default function Sidebar({
@@ -6,6 +5,7 @@ export default function Sidebar({
   currentConversationId,
   onSelectConversation,
   onNewConversation,
+  onOpenCouncilModal,
 }) {
   return (
     <div className="sidebar">
@@ -37,6 +37,12 @@ export default function Sidebar({
             </div>
           ))
         )}
+      </div>
+
+      <div className="sidebar-footer">
+        <button className="councils-btn" onClick={onOpenCouncilModal}>
+          ⚙️ Consejos
+        </button>
       </div>
     </div>
   );

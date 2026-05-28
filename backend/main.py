@@ -4,13 +4,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import uuid
 import json
 import asyncio
 
 from . import storage
 from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from . import councils as councils_store
+from . import models_catalog
+from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
 app = FastAPI(title="LLM Council API")
 
@@ -26,7 +29,14 @@ app.add_middleware(
 
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
-    pass
+    council_id: Optional[str] = None
+
+
+class CouncilRequest(BaseModel):
+    """Request body for creating or updating a council."""
+    name: str
+    models: List[str]
+    chairman: str
 
 
 class SendMessageRequest(BaseModel):
@@ -65,8 +75,16 @@ async def list_conversations():
 @app.post("/api/conversations", response_model=Conversation)
 async def create_conversation(request: CreateConversationRequest):
     """Create a new conversation."""
+    councils_store.seed_defaults()
+    council_id = request.council_id
+    # Validate council_id if provided; fall back to first available
+    if council_id and councils_store.get_council(council_id) is None:
+        council_id = None
+    if council_id is None:
+        all_councils = councils_store.load_councils()
+        council_id = all_councils[0]["id"] if all_councils else None
     conversation_id = str(uuid.uuid4())
-    conversation = storage.create_conversation(conversation_id)
+    conversation = storage.create_conversation(conversation_id, council_id)
     return conversation
 
 
@@ -77,6 +95,16 @@ async def get_conversation(conversation_id: str):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
+
+
+def _resolve_council_models(conversation: Dict[str, Any]):
+    """Return (models, chairman) for a conversation, falling back to config defaults."""
+    council_id = conversation.get("council_id")
+    if council_id:
+        council = councils_store.get_council(council_id)
+        if council:
+            return council["models"], council["chairman"]
+    return COUNCIL_MODELS, CHAIRMAN_MODEL
 
 
 @app.post("/api/conversations/{conversation_id}/message")
@@ -102,8 +130,9 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         storage.update_conversation_title(conversation_id, title)
 
     # Run the 3-stage council process
+    models, chairman = _resolve_council_models(conversation)
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        request.content
+        request.content, models, chairman
     )
 
     # Add assistant message with all stages
@@ -137,6 +166,8 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
     # Check if this is the first message
     is_first_message = len(conversation["messages"]) == 0
 
+    models, chairman = _resolve_council_models(conversation)
+
     async def event_generator():
         try:
             # Add user message
@@ -149,18 +180,18 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Stage 1: Collect responses
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(request.content)
+            stage1_results = await stage1_collect_responses(request.content, models)
             yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results)
+            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results, models)
             aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results)
+            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results, chairman)
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started
@@ -192,6 +223,51 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             "Connection": "keep-alive",
         }
     )
+
+
+# --- Council endpoints ---
+
+@app.get("/api/councils")
+async def list_councils():
+    """List all councils, seeding defaults if empty."""
+    councils_store.seed_defaults()
+    return councils_store.load_councils()
+
+
+@app.post("/api/councils", status_code=201)
+async def create_council(request: CouncilRequest):
+    """Create a new council."""
+    try:
+        return councils_store.create_council(request.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.put("/api/councils/{council_id}")
+async def update_council(council_id: str, request: CouncilRequest):
+    """Update an existing council."""
+    try:
+        return councils_store.update_council(council_id, request.model_dump())
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Council not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/councils/{council_id}")
+async def delete_council(council_id: str):
+    """Delete a council."""
+    if not councils_store.delete_council(council_id):
+        raise HTTPException(status_code=404, detail="Council not found")
+    return {"ok": True}
+
+
+# --- Models catalog endpoint ---
+
+@app.get("/api/models/catalog")
+async def get_models_catalog():
+    """Return available models with pricing data."""
+    return models_catalog.get_catalog()
 
 
 if __name__ == "__main__":

@@ -19,17 +19,13 @@ export const api = {
   /**
    * Create a new conversation.
    */
-  async createConversation() {
+  async createConversation(councilId = null) {
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(councilId ? { council_id: councilId } : {}),
     });
-    if (!response.ok) {
-      throw new Error('Failed to create conversation');
-    }
+    if (!response.ok) throw new Error('Failed to create conversation');
     return response.json();
   },
 
@@ -111,5 +107,52 @@ export const api = {
         }
       }
     }
+  },
+  // --- Councils ---
+
+  async listCouncils() {
+    const r = await fetch(`${API_BASE}/api/councils`);
+    if (!r.ok) throw new Error('Failed to list councils');
+    return r.json();
+  },
+
+  async createCouncil(data) {
+    const r = await fetch(`${API_BASE}/api/councils`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create council');
+    }
+    return r.json();
+  },
+
+  async updateCouncil(id, data) {
+    const r = await fetch(`${API_BASE}/api/councils/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update council');
+    }
+    return r.json();
+  },
+
+  async deleteCouncil(id) {
+    const r = await fetch(`${API_BASE}/api/councils/${id}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error('Failed to delete council');
+    return r.json();
+  },
+
+  // --- Models catalog ---
+
+  async getModelsCatalog() {
+    const r = await fetch(`${API_BASE}/api/models/catalog`);
+    if (!r.ok) throw new Error('Failed to load models catalog');
+    return r.json();
   },
 };
