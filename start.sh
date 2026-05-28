@@ -5,9 +5,19 @@
 echo "Starting LLM Council..."
 echo ""
 
+# Locate project .venv Python (Windows vs POSIX) — bypass uv to avoid VIRTUAL_ENV conflicts
+if [ -f ".venv/Scripts/python.exe" ]; then
+    PYTHON=".venv/Scripts/python.exe"
+elif [ -f ".venv/bin/python" ]; then
+    PYTHON=".venv/bin/python"
+else
+    echo "Error: .venv not found. Run 'uv sync' first."
+    exit 1
+fi
+
 # Start backend
 echo "Starting backend on http://localhost:8001..."
-uv run python -m backend.main &
+"$PYTHON" -m backend.main &
 BACKEND_PID=$!
 
 # Wait a bit for backend to start
