@@ -4,6 +4,16 @@
 
 > **Fork of [karpathy/llm-council](https://github.com/karpathy/llm-council).** This fork preserves the original Vibe Code MVP and extends it with configurable councils (UI), per-query cost estimation, a Windows launcher, and a `.env.example` template. See [Fork additions](#fork-additions) at the bottom for details. The rest of this README is Karpathy's original text, kept intact.
 
+## Screenshots
+
+![Stage 3: Final synthesis from the Chairman](docs/screenshots/04-stage3-final-synthesis.png)
+
+*The Chairman (Gemini 2.5 Pro in this run) synthesizes the council's deliberation after three stages: individual responses → anonymous peer rankings → final synthesis. See the full flow: [01 — prompt submitted](docs/screenshots/01-prompt-submitted-loading.png) · [02 — Stage 1 individual responses](docs/screenshots/02-stage1-individual-responses.png) · [03 — Stage 2 peer rankings](docs/screenshots/03-stage2-peer-rankings.png) · [04 — Stage 3 final synthesis](docs/screenshots/04-stage3-final-synthesis.png).*
+
+![Council manager — presets](docs/screenshots/05-council-config-presets.png)
+
+*The fork's council manager with per-query cost estimation. Three views: [Presets](docs/screenshots/05-council-config-presets.png) · [New council](docs/screenshots/06-council-config-new-council.png) · [Catalog](docs/screenshots/07-council-config-catalog.png).*
+
 The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.1, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, xAI Grok 4, eg.c), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenRouter to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
 
 In a bit more detail, here is what happens when you submit a query:
@@ -17,6 +27,8 @@ In a bit more detail, here is what happens when you submit a query:
 This project was 99% vibe coded as a fun Saturday hack because I wanted to explore and evaluate a number of LLMs side by side in the process of [reading books together with LLMs](https://x.com/karpathy/status/1990577951671509438). It's nice and useful to see multiple responses side by side, and also the cross-opinions of all LLMs on each other's outputs. I'm not going to support it in any way, it's provided here as is for other people's inspiration and I don't intend to improve it. Code is ephemeral now and libraries are over, ask your LLM to change it in whatever way you like.
 
 ## Setup
+
+> 💡 **Fork update.** This section is Karpathy's original native-install path. For a one-command Docker setup, the up-to-date `.env.example` workflow, and the new council manager UI, see **[SETUP.md](SETUP.md)** — written to be readable by both humans and AI agents.
 
 ### 1. Install Dependencies
 
@@ -44,6 +56,8 @@ OPENROUTER_API_KEY=sk-or-v1-...
 
 Get your API key at [openrouter.ai](https://openrouter.ai/). Make sure to purchase the credits you need, or sign up for automatic top up.
 
+> 💡 **Fork update.** This fork ships `.env.example` — use `cp .env.example .env` and edit, instead of creating the file from scratch. Details in [SETUP.md §3](SETUP.md#3-configure-api-key).
+
 ### 3. Configure Models (Optional)
 
 Edit `backend/config.py` to customize the council:
@@ -59,7 +73,11 @@ COUNCIL_MODELS = [
 CHAIRMAN_MODEL = "google/gemini-3-pro-preview"
 ```
 
+> 💡 **Fork update.** With this fork you no longer need to edit `config.py` — the in-UI **Council Manager** lets you create, edit, and price-estimate councils visually. The values above are only used as a fallback if no councils exist yet. See [SETUP.md §6 — First use](SETUP.md#6-first-use--council-manager) and [Fork additions](#fork-additions) below.
+
 ## Running the Application
+
+> 💡 **Fork update.** Three ways to run, in order of recommendation: **(a)** `docker compose up` (zero local deps — see [SETUP.md §4](SETUP.md#4-run--track-a-docker)), **(b)** `start.bat` on Windows / `start.sh` on macOS-Linux, **(c)** the manual two-terminal route below.
 
 **Option 1: Use the start script**
 ```bash
@@ -121,6 +139,21 @@ Double-click `start.bat` (Windows) to open backend and frontend in separate `cmd
 ### 4. `.env.example` template
 
 Copy `.env.example` to `.env` and fill in your OpenRouter key. Original repo expected you to read the README to know what to set; this template documents the env var inline with links to OpenRouter pricing.
+
+### 5. Docker / Docker Compose
+
+`docker compose up` brings up the whole stack in one command — zero local Python / Node / uv installations required. Useful for evaluators who want to try the project without installing the toolchain, and as a reproducible smoke-test target. Includes:
+
+- `backend/Dockerfile` — uv-based image (`ghcr.io/astral-sh/uv:python3.13-bookworm-slim`).
+- `frontend/Dockerfile` — `node:20-alpine` running Vite dev server.
+- `docker-compose.yml` — orchestrates both services, mounts `./data/` for persistence, and bind-mounts source for hot reload.
+- `.dockerignore` — keeps `.venv`, `node_modules`, `data/`, and the `.env` out of the build context.
+
+Full instructions in [SETUP.md §4 — Track A (Docker)](SETUP.md#4-run--track-a-docker).
+
+### 6. AI-readable `SETUP.md`
+
+The fork adds a [`SETUP.md`](SETUP.md) written to be parsed and executed by AI agents (Claude Code, Cursor, Codex, etc.) as well as humans. It documents prerequisites with verification commands, both setup tracks (native + Docker), troubleshooting, and a compact "For AI agents" section with invariants the agent should not violate.
 
 ### Design docs
 
