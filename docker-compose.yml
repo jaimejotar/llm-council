@@ -1,0 +1,45 @@
+# LLM Council — Docker Compose orchestration
+#
+# Quick start:
+#   1. cp .env.example .env  &&  edit .env with your OPENROUTER_API_KEY
+#   2. docker compose up
+#   3. open http://localhost:5173
+#
+# Notes:
+# - data/ is bind-mounted so conversations and councils.json persist on the host
+# - backend/ and frontend/src/ are bind-mounted for hot reload during development
+# - the backend's CORS already allows http://localhost:5173
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: llm-council-backend
+    ports:
+      - "8001:8001"
+    env_file:
+      - .env
+    volumes:
+      # Persistent state (conversations + councils.json) — survives container restarts
+      - ./data:/app/data
+      # Source bind mount for hot iteration (uvicorn doesn't auto-reload here, but file edits stay in sync)
+      - ./backend:/app/backend:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: llm-council-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      # Vite watches these and HMR-reloads when edited from the host
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+      # Prevent the host's empty node_modules from shadowing the image's installed packages
+      - /app/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
