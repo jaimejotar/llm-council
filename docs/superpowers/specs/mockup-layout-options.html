@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LLM Council — Layout Options Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 24px; }
+  h1 { font-size: 20px; color: #fff; margin-bottom: 8px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 32px; }
+  .options { display: flex; gap: 24px; flex-wrap: wrap; }
+  .option { flex: 1; min-width: 320px; max-width: 420px; }
+  .option-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #4a90e2; margin-bottom: 8px; }
+  .option-title { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .option-desc { font-size: 12px; color: #888; margin-bottom: 12px; line-height: 1.5; }
+
+  /* App shell */
+  .app { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4); height: 480px; display: flex; flex-direction: column; }
+  .app-inner { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar { width: 200px; background: #f5f5f5; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-header { padding: 12px 10px 8px; border-bottom: 1px solid #e0e0e0; }
+  .sidebar-header .title { font-size: 13px; font-weight: 700; color: #333; }
+  .sidebar-header .subtitle-s { font-size: 10px; color: #999; }
+  .sidebar-actions { display: flex; gap: 4px; padding: 8px; }
+  .btn-new { background: #4a90e2; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; flex: 1; }
+  .btn-icon { background: #e8e8e8; color: #555; border: none; border-radius: 6px; padding: 5px 8px; font-size: 13px; cursor: pointer; }
+  .btn-icon.active { background: #4a90e2; color: #fff; }
+  .conv-list { flex: 1; overflow-y: auto; padding: 4px; }
+  .conv-item { padding: 6px 8px; border-radius: 5px; font-size: 11px; color: #555; cursor: pointer; margin-bottom: 2px; }
+  .conv-item:hover, .conv-item.active { background: #e8eef8; color: #333; }
+  .sidebar-footer { padding: 8px; border-top: 1px solid #e0e0e0; }
+
+  /* Main area */
+  .main { flex: 1; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+  .chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .msg-user { align-self: flex-end; background: #4a90e2; color: #fff; border-radius: 12px 12px 2px 12px; padding: 8px 12px; font-size: 12px; max-width: 60%; }
+  .msg-assistant { align-self: flex-start; background: #f5f5f5; border-radius: 2px 12px 12px 12px; padding: 8px 12px; font-size: 12px; max-width: 75%; color: #333; }
+  .stage-badge { display: inline-block; font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 3px; margin-right: 4px; }
+  .s1 { background: #e3f2fd; color: #1565c0; }
+  .s2 { background: #fff3e0; color: #e65100; }
+  .s3 { background: #e8f5e9; color: #2e7d32; }
+  .chat-input { border-top: 1px solid #e0e0e0; padding: 10px; display: flex; gap: 6px; }
+  .input-box { flex: 1; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 12px; color: #333; resize: none; outline: none; }
+  .btn-send { background: #4a90e2; color: #fff; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+
+  /* Council bar (Option B) */
+  .council-bar { background: #fafafa; border-bottom: 1px solid #e0e0e0; padding: 6px 12px; display: flex; align-items: center; gap: 8px; }
+  .council-bar-label { font-size: 10px; color: #999; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .council-name { font-size: 12px; font-weight: 700; color: #333; }
+  .model-pills { display: flex; gap: 4px; flex: 1; }
+  .pill { background: #e8eef8; color: #4a90e2; border-radius: 10px; padding: 2px 7px; font-size: 9px; font-weight: 600; }
+  .pill.chair { background: #fff3cd; color: #c57c00; }
+  .btn-edit { background: none; border: 1px solid #ddd; border-radius: 5px; padding: 3px 8px; font-size: 10px; color: #666; cursor: pointer; }
+  .btn-edit:hover { background: #f0f0f0; }
+
+  /* OPTION A — Sidebar panel */
+  .council-panel { width: 200px; background: #f0f4ff; border-right: 1px solid #c5d0e8; display: flex; flex-direction: column; flex-shrink: 0; }
+  .panel-header { padding: 10px; border-bottom: 1px solid #c5d0e8; font-size: 12px; font-weight: 700; color: #333; display: flex; justify-content: space-between; align-items: center; }
+  .panel-header .btn-back { background: none; border: none; color: #4a90e2; font-size: 11px; cursor: pointer; padding: 0; }
+  .council-card { margin: 6px; padding: 8px; background: #fff; border-radius: 7px; border: 2px solid transparent; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .council-card.selected { border-color: #4a90e2; }
+  .council-card .c-name { font-size: 11px; font-weight: 700; color: #333; margin-bottom: 3px; }
+  .council-card .c-models { font-size: 9px; color: #666; line-height: 1.5; }
+  .council-card .c-cost { font-size: 9px; color: #2e7d32; font-weight: 600; margin-top: 3px; }
+  .council-card .c-badge { display: inline-block; font-size: 8px; padding: 1px 4px; border-radius: 3px; background: #e8eef8; color: #4a90e2; font-weight: 700; margin-bottom: 4px; }
+  .btn-add-council { margin: 6px; padding: 7px; background: none; border: 2px dashed #c5d0e8; border-radius: 7px; color: #4a90e2; font-size: 11px; cursor: pointer; text-align: center; }
+  .btn-add-council:hover { background: #e8eef8; }
+
+  /* OPTION C — Modal */
+  .modal-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; z-index: 10; }
+  .modal { background: #fff; border-radius: 12px; width: 85%; height: 80%; display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,0.3); overflow: hidden; }
+  .modal-header { padding: 14px 16px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; }
+  .modal-title { font-size: 15px; font-weight: 700; color: #333; }
+  .modal-close { background: none; border: none; font-size: 18px; color: #999; cursor: pointer; }
+  .modal-tabs { display: flex; gap: 0; border-bottom: 1px solid #e0e0e0; padding: 0 16px; }
+  .modal-tab { padding: 8px 14px; font-size: 12px; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .modal-tab.active { color: #4a90e2; border-bottom-color: #4a90e2; font-weight: 600; }
+  .modal-body { flex: 1; padding: 14px 16px; overflow-y: auto; display: flex; gap: 12px; }
+  .modal-col { flex: 1; }
+  .modal-col-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #aaa; margin-bottom: 8px; }
+  .model-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px; margin-bottom: 4px; background: #fafafa; border: 1px solid #eee; }
+  .model-row .m-name { font-size: 11px; color: #333; flex: 1; font-weight: 500; }
+  .model-row .m-cost { font-size: 10px; color: #666; }
+  .model-row .m-remove { background: none; border: none; color: #ccc; cursor: pointer; font-size: 14px; padding: 0; }
+  .model-row .m-remove:hover { color: #e53935; }
+  .chair-badge { background: #fff3cd; color: #c57c00; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; }
+  .model-search { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 6px 10px; font-size: 12px; outline: none; margin-bottom: 8px; }
+  .model-option { padding: 6px 8px; border-radius: 5px; font-size: 11px; color: #333; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .model-option:hover { background: #e8eef8; }
+  .model-option .m-price { font-size: 10px; color: #888; }
+  .cost-summary { background: #f0fff4; border: 1px solid #c8e6c9; border-radius: 7px; padding: 10px 12px; margin-top: 10px; }
+  .cost-summary .cs-title { font-size: 10px; font-weight: 700; color: #2e7d32; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .cost-row { display: flex; justify-content: space-between; font-size: 11px; color: #555; margin-bottom: 3px; }
+  .cost-row .val { font-weight: 600; color: #2e7d32; }
+  .modal-footer { padding: 10px 16px; border-top: 1px solid #e0e0e0; display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-cancel { background: #f5f5f5; color: #555; border: 1px solid #ddd; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; }
+  .btn-save { background: #4a90e2; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; }
+  .app-relative { position: relative; }
+
+  /* Pros/cons */
+  .pros-cons { margin-top: 10px; display: flex; gap: 8px; font-size: 11px; }
+  .pros { color: #2e7d32; }
+  .cons { color: #c62828; }
+  .pros span, .cons span { font-weight: 700; }
+  .recommended { display: inline-block; background: #e8f5e9; color: #2e7d32; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
+</style>
+</head>
+<body>
+<h1>LLM Council — Opciones de Layout para Config de Consejos</h1>
+<p class="subtitle">3 enfoques de UX — ¿Cuál se siente más natural para tu flujo de trabajo?</p>
+
+<div class="options">
+
+  <!-- OPTION A: Sidebar Panel -->
+  <div class="option">
+    <div class="option-label">Opción A</div>
+    <div class="option-title">Panel en Sidebar <span class="recommended">★ RECOMENDADO</span></div>
+    <div class="option-desc">El sidebar tiene dos estados: lista de conversaciones (vista actual) y selector de consejos. Se alterna con un ícono ⚙️. Todo queda en el lado izquierdo, sin interrumpir el chat.</div>
+    <div class="app">
+      <div class="app-inner">
+        <!-- Sidebar en modo "council" -->
+        <div class="council-panel">
+          <div class="panel-header">
+            <span>⚡ Consejos</span>
+            <button class="btn-back">← chats</button>
+          </div>
+          <div class="council-card selected">
+            <div class="c-badge">ACTIVO</div>
+            <div class="c-name">🔬 Exploración Barata</div>
+            <div class="c-models">Haiku 4.5 · Flash 2.0<br>GPT-4.1 Mini · Llama 4</div>
+            <div class="c-cost">~$0.01–0.03 / query</div>
+          </div>
+          <div class="council-card">
+            <div class="c-badge" style="background:#fff3cd;color:#c57c00">PREMIUM</div>
+            <div class="c-name">🏆 Consejo Premium</div>
+            <div class="c-models">Sonnet 4.5 · Gemini 2.5 Pro<br>GPT-4.1 · Grok-3</div>
+            <div class="c-cost">~$0.10–0.30 / query</div>
+          </div>
+          <div class="council-card" style="opacity:0.7">
+            <div class="c-name">🏥 Análisis Clínico</div>
+            <div class="c-models">Opus 4.7 · Gemini 2.5 Pro<br>GPT-4.1 · Sonnet 4.5</div>
+            <div class="c-cost">~$0.40–1.20 / query</div>
+          </div>
+          <button class="btn-add-council">+ Nuevo consejo</button>
+        </div>
+        <!-- Main chat -->
+        <div class="main">
+          <div class="chat-area">
+            <div class="msg-user">¿Cuál es la diferencia entre CRSS y PPA en GES?</div>
+            <div class="msg-assistant">
+              <span class="stage-badge s1">S1</span> 4 respuestas individuales ✓<br>
+              <span class="stage-badge s2">S2</span> Rankings cruzados ✓<br>
+              <span class="stage-badge s3">S3</span> Síntesis final ✓
+            </div>
+          </div>
+          <div class="chat-input">
+            <textarea class="input-box" placeholder="Haz una pregunta al consejo..." rows="2"></textarea>
+            <button class="btn-send">→</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros"><span>✓</span> Sin modales · Siempre visible · Fácil de extender</div>
+      <div class="cons" style="margin-left:8px"><span>✗</span> Sidebar más ancho</div>
+    </div>
+  </div>
+
+  <!-- OPTION B: Council Bar -->
+  <div class="option">
+    <div class="option-label">Opción B</div>
+    <div class="option-title">Barra de Consejo Activo</div>
+    <div class="option-desc">Una barra contextual encima del chat muestra el consejo activo con pills de modelos. Click en "Editar" abre el panel completo. Ocupación mínima, pero editar requiere más clicks.</div>
+    <div class="app">
+      <div class="app-inner">
+        <div class="sidebar">
+          <div class="sidebar-header">
+            <div class="title">LLM Council</div>
+            <div class="subtitle-s">Conversaciones</div>
+          </div>
+          <div class="sidebar-actions">
+            <button class="btn-new">+ Nueva</button>
+          </div>
+          <div class="conv-list">
+            <div class="conv-item active">¿Diferencia CRSS y PPA?</div>
+            <div class="conv-item">Análisis paper oncológico</div>
+            <div class="conv-item">Refactor pipeline HD</div>
+          </div>
+        </div>
+        <div class="main">
+          <!-- Council bar -->
+          <div class="council-bar">
+            <div>
+              <div class="council-bar-label">Consejo activo</div>
+              <div class="council-name">🔬 Exploración Barata</div>
+            </div>
+            <div class="model-pills">
+              <span class="pill">Haiku</span>
+              <span class="pill">Flash</span>
+              <span class="pill">4.1 Mini</span>
+              <span class="pill chair">⭐ Flash (chair)</span>
+            </div>
+            <div style="font-size:10px;color:#2e7d32;font-weight:600;white-space:nowrap">~$0.02/q</div>
+            <button class="btn-edit">⚙️ Editar</button>
+          </div>
+          <div class="chat-area">
+            <div class="msg-user">¿Cuál es la diferencia entre CRSS y PPA en GES?</div>
+            <div class="msg-assistant">
+              <span class="stage-badge s3">S3</span> El CRSS (Cierre de Registro de Seguimiento de Salud) y el PPA (Plan de Prestaciones Aseguradas) difieren en...
+            </div>
+          </div>
+          <div class="chat-input">
+            <textarea class="input-box" placeholder="Haz una pregunta al consejo..." rows="2"></textarea>
+            <button class="btn-send">→</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros"><span>✓</span> Siempre visible el consejo activo · Sin cambio de layout</div>
+      <div class="cons" style="margin-left:8px"><span>✗</span> Editar requiere modal adicional</div>
+    </div>
+  </div>
+
+  <!-- OPTION C: Modal -->
+  <div class="option">
+    <div class="option-label">Opción C</div>
+    <div class="option-title">Modal Completo</div>
+    <div class="option-desc">Botón "⚙️ Consejos" en el sidebar footer abre un modal con 3 tabs: Presets, Editor, y Catálogo de Modelos. Editor in-place con buscador de modelos y estimación de costos en tiempo real.</div>
+    <div class="app app-relative">
+      <div class="app-inner">
+        <div class="sidebar">
+          <div class="sidebar-header">
+            <div class="title">LLM Council</div>
+          </div>
+          <div class="sidebar-actions">
+            <button class="btn-new">+ Nueva</button>
+          </div>
+          <div class="conv-list">
+            <div class="conv-item active">¿Diferencia CRSS y PPA?</div>
+            <div class="conv-item">Análisis paper</div>
+          </div>
+          <div class="sidebar-footer">
+            <button class="btn-icon active" style="width:100%;font-size:11px">⚙️ Consejos</button>
+          </div>
+        </div>
+        <div class="main">
+          <div class="chat-area" style="opacity:0.3">
+            <div class="msg-user">¿Diferencia CRSS y PPA?</div>
+          </div>
+          <div class="chat-input" style="opacity:0.3">
+            <textarea class="input-box" rows="2"></textarea>
+            <button class="btn-send">→</button>
+          </div>
+        </div>
+      </div>
+      <!-- Modal overlay -->
+      <div class="modal-overlay">
+        <div class="modal">
+          <div class="modal-header">
+            <div class="modal-title">⚙️ Configurar Consejo</div>
+            <button class="modal-close">×</button>
+          </div>
+          <div class="modal-tabs">
+            <div class="modal-tab">Presets</div>
+            <div class="modal-tab active">Editor</div>
+            <div class="modal-tab">Catálogo</div>
+          </div>
+          <div class="modal-body">
+            <div class="modal-col">
+              <div class="modal-col-title">Miembros del consejo</div>
+              <div class="model-row">
+                <div class="m-name">anthropic/claude-haiku-4.5</div>
+                <div class="m-cost">$0.25/$1.25</div>
+                <button class="m-remove">×</button>
+              </div>
+              <div class="model-row">
+                <div class="m-name">google/gemini-2.0-flash <span class="chair-badge">⭐ Chair</span></div>
+                <div class="m-cost">$0.10/$0.40</div>
+                <button class="m-remove">×</button>
+              </div>
+              <div class="model-row">
+                <div class="m-name">openai/gpt-4.1-mini</div>
+                <div class="m-cost">$0.40/$1.60</div>
+                <button class="m-remove">×</button>
+              </div>
+              <div class="model-row">
+                <div class="m-name">meta-llama/llama-4-maverick</div>
+                <div class="m-cost">$0.18/$0.54</div>
+                <button class="m-remove">×</button>
+              </div>
+              <div class="cost-summary">
+                <div class="cs-title">💰 Estimación de costos</div>
+                <div class="cost-row"><span>Por 1M tokens (input)</span><span class="val">$0.93</span></div>
+                <div class="cost-row"><span>Por 1M tokens (output)</span><span class="val">$3.79</span></div>
+                <div class="cost-row"><span>Por query típica (~2k tokens)</span><span class="val">~$0.02</span></div>
+              </div>
+            </div>
+            <div class="modal-col">
+              <div class="modal-col-title">Agregar modelo</div>
+              <input class="model-search" placeholder="🔍 Buscar modelo..." value="gem">
+              <div class="model-option">
+                <span>google/gemini-2.5-pro</span>
+                <span class="m-price">$1.25/$10.00</span>
+              </div>
+              <div class="model-option" style="background:#e8eef8">
+                <span>google/gemini-2.0-flash ✓ ya en lista</span>
+                <span class="m-price">$0.10/$0.40</span>
+              </div>
+              <div class="model-option">
+                <span>google/gemini-2.5-flash</span>
+                <span class="m-price">$0.15/$0.60</span>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-cancel">Cancelar</button>
+            <button class="btn-save">Guardar consejo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pros-cons">
+      <div class="pros"><span>✓</span> Editor más rico · Buscador de modelos · Sin cambios en layout base</div>
+      <div class="cons" style="margin-left:8px"><span>✗</span> Bloquea el chat al editar</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
