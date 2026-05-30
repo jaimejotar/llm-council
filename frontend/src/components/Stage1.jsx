@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { CostBadge, StageCostBreakdown } from './CostElements';
 import './Stage1.css';
 
 export default function Stage1({ responses }) {
@@ -30,7 +31,10 @@ export default function Stage1({ responses }) {
         <div className="response-text markdown-content">
           <ReactMarkdown>{responses[activeTab].response}</ReactMarkdown>
         </div>
+        <CostBadge usage={responses[activeTab].usage} />
       </div>
+
+      <StageCostBreakdown items={responses} label="Ver costos del Stage 1" />
     </div>
   );
 }

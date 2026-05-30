@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
+import { TurnCostSummary, ConversationCostSummary } from './CostElements';
 import './ChatInterface.css';
 
 export default function ChatInterface({
@@ -104,10 +105,20 @@ export default function ChatInterface({
                     </div>
                   )}
                   {msg.stage3 && <Stage3 finalResponse={msg.stage3} />}
+
+                  {/* Turn cost summary (shows only when at least one stage has usage) */}
+                  {msg.stage3 && !msg.loading?.stage3 && (
+                    <TurnCostSummary message={msg} />
+                  )}
                 </div>
               )}
             </div>
           ))
+        )}
+
+        {/* Conversation-wide grand total */}
+        {conversation.messages.length > 0 && (
+          <ConversationCostSummary messages={conversation.messages} />
         )}
 
         {isLoading && (

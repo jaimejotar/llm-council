@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown';
+import { CostBadge } from './CostElements';
 import './Stage3.css';
 
 export default function Stage3({ finalResponse }) {
@@ -16,6 +17,7 @@ export default function Stage3({ finalResponse }) {
         <div className="final-text markdown-content">
           <ReactMarkdown>{finalResponse.response}</ReactMarkdown>
         </div>
+        <CostBadge usage={finalResponse.usage} />
       </div>
     </div>
   );

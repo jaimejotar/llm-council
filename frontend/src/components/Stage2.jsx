@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { CostBadge, StageCostBreakdown } from './CostElements';
 import './Stage2.css';
 
 function deAnonymizeText(text, labelToModel) {
@@ -68,7 +69,11 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
             </ol>
           </div>
         )}
+
+        <CostBadge usage={rankings[activeTab].usage} />
       </div>
+
+      <StageCostBreakdown items={rankings} label="Ver costos del Stage 2" />
 
       {aggregateRankings && aggregateRankings.length > 0 && (
         <div className="aggregate-rankings">

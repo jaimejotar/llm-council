@@ -1,35 +1,6 @@
 import { useState, useMemo } from 'react';
+import { estimateCost, fmt } from '../utils/pricing';
 import './CouncilModal.css';
-
-const TYPICAL_INPUT_TOKENS = 1500;
-const TYPICAL_OUTPUT_TOKENS = 500;
-
-function estimateCost(modelIds, catalog) {
-  const index = Object.fromEntries(catalog.map((m) => [m.id, m]));
-  let totalCost = 0;
-  let knownCount = 0;
-  let sumInput = 0;
-  let sumOutput = 0;
-  for (const id of modelIds) {
-    const m = index[id];
-    if (!m) continue;
-    knownCount++;
-    totalCost +=
-      (m.input_price_per_1m * TYPICAL_INPUT_TOKENS) / 1_000_000 +
-      (m.output_price_per_1m * TYPICAL_OUTPUT_TOKENS) / 1_000_000;
-    sumInput += m.input_price_per_1m;
-    sumOutput += m.output_price_per_1m;
-  }
-  return {
-    perQuery: totalCost,
-    avgInput: knownCount ? sumInput / knownCount : 0,
-    avgOutput: knownCount ? sumOutput / knownCount : 0,
-  };
-}
-
-function fmt(n, decimals = 4) {
-  return n.toFixed(decimals);
-}
 
 // --- Presets tab ---
 function PresetsTab({ councils, catalog, onEdit, onDelete, onStartNew }) {
@@ -40,13 +11,30 @@ function PresetsTab({ councils, catalog, onEdit, onDelete, onStartNew }) {
         return (
           <div key={c.id} className="cm-card">
             <div className="cm-card-top">
-              {c.is_preset && <span className="cm-badge">PRESET</span>}
+              <div className="cm-card-badges">
+                {c.is_preset && <span className="cm-badge">PRESET</span>}
+                {c.invalid_models?.length > 0 && (
+                  <span
+                    className="cm-badge cm-badge-warn"
+                    title={`Modelos no disponibles en OpenRouter:\n${c.invalid_models.join('\n')}\n\nEdita el consejo para reemplazarlos.`}
+                  >
+                    ⚠ {c.invalid_models.length} no disponible{c.invalid_models.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
               <div className="cm-card-name">{c.name}</div>
               <div className="cm-card-models">
                 {c.models.slice(0, 3).map((m) => {
                   const label = m.split('/')[1] || m;
+                  const broken = c.invalid_models?.includes(m);
                   return (
-                    <span key={m} className="cm-pill">{label}</span>
+                    <span
+                      key={m}
+                      className={`cm-pill${broken ? ' cm-pill-broken' : ''}`}
+                      title={broken ? 'No disponible en OpenRouter' : undefined}
+                    >
+                      {broken ? '⚠ ' : ''}{label}
+                    </span>
                   );
                 })}
                 {c.models.length > 3 && (

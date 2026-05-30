@@ -109,6 +109,13 @@
 
 .cm-card-top { flex: 1; }
 
+.cm-card-badges {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
 .cm-badge {
   display: inline-block;
   font-size: 9px;
@@ -117,8 +124,21 @@
   border-radius: 3px;
   background: #e8eef8;
   color: #4a90e2;
-  margin-bottom: 4px;
   letter-spacing: 0.5px;
+}
+
+.cm-badge-warn {
+  background: #fdecea;
+  color: #c0392b;
+  letter-spacing: 0;
+  cursor: help;
+}
+
+.cm-pill-broken {
+  background: #fdecea;
+  color: #c0392b;
+  text-decoration: line-through;
+  text-decoration-color: rgba(192, 57, 43, 0.5);
 }
 
 .cm-card-name {

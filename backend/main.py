@@ -1,10 +1,12 @@
 """FastAPI backend for LLM Council."""
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
+import logging
 import uuid
 import json
 import asyncio
@@ -15,7 +17,20 @@ from . import councils as councils_store
 from . import models_catalog
 from .config import COUNCIL_MODELS, CHAIRMAN_MODEL
 
-app = FastAPI(title="LLM Council API")
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Seed defaults if empty, then migrate any untouched legacy presets to current defaults.
+    councils_store.seed_defaults()
+    migrated = councils_store.migrate_legacy_presets()
+    if migrated:
+        logger.info("Migrated legacy presets to current defaults: %s", ", ".join(migrated))
+    yield
+
+
+app = FastAPI(title="LLM Council API", lifespan=lifespan)
 
 # Enable CORS for local development
 app.add_middleware(

@@ -1,0 +1,264 @@
+/* ---------- inline per-response badge ---------- */
+
+.cost-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  color: #555;
+  background: #f4f7fb;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid #e0e6f0;
+  margin-top: 8px;
+  white-space: nowrap;
+}
+
+.cost-badge .cb-arrow {
+  color: #4a90e2;
+  font-weight: 700;
+}
+
+.cost-badge .cb-dot {
+  color: #c0c8d4;
+  padding: 0 2px;
+}
+
+.cost-badge .cb-cost {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* ---------- per-stage collapsible breakdown ---------- */
+
+.cost-expand {
+  margin-top: 12px;
+  border-top: 1px dashed #e0e6f0;
+  padding-top: 8px;
+}
+
+.cost-expand > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  color: #4a90e2;
+  font-size: 12px;
+  user-select: none;
+  list-style: none;
+  padding: 4px 0;
+}
+
+.cost-expand > summary::-webkit-details-marker { display: none; }
+
+.cost-expand > summary:hover { color: #357abd; }
+
+.cost-expand .ce-summary-label {
+  font-weight: 500;
+}
+
+.cost-expand .ce-summary-totals {
+  font-family: 'SFMono-Regular', 'Consolas', 'Monaco', monospace;
+  color: #666;
+  font-size: 11px;
+}
+
+.cost-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 12px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Monaco', monospace;
+}
+
+.cost-table th {
+  text-align: left;
+  font-weight: 600;
+  color: #888;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e0e6f0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.cost-table th.num,
+.cost-table td.num {
+  text-align: right;
+}
+
+.cost-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid #f0f3f8;
+  color: #333;
+}
+
+.cost-table tr:last-child td { border-bottom: none; }
+
+.cost-table .cost-total-row td {
+  font-weight: 700;
+  color: #2c3e50;
+  border-top: 2px solid #e0e6f0;
+  border-bottom: none;
+  padding-top: 8px;
+}
+
+/* ---------- per-turn one-liner ---------- */
+
+.turn-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-top: 12px;
+  border-top: 1px solid #e0e0e0;
+  font-size: 12px;
+  color: #666;
+  font-family: 'SFMono-Regular', 'Consolas', 'Monaco', monospace;
+}
+
+.turn-summary .ts-label {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px;
+  color: #888;
+  font-weight: 700;
+}
+
+.turn-summary .ts-sep { color: #c0c8d4; }
+
+.turn-summary .ts-cost {
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 13px;
+}
+
+.turn-summary .ts-tokens {
+  color: #333;
+}
+
+.turn-summary .ts-detail {
+  margin-left: auto;
+  font-size: 11px;
+  color: #888;
+}
+
+/* ---------- conversation grand total ---------- */
+
+.conversation-summary {
+  margin: 24px 0 16px 0;
+  border: 1px solid #4a90e2;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.conversation-summary .cs-header {
+  background: #e8eef8;
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #2c3e50;
+  border-bottom: 1px solid #d0dcef;
+}
+
+.conversation-summary .cs-turns {
+  font-weight: 400;
+  color: #666;
+  font-size: 12px;
+  margin-left: 6px;
+}
+
+.cs-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.cs-stage-row {
+  border-bottom: 1px solid #f0f3f8;
+}
+
+.cs-stage-row:last-of-type {
+  border-bottom: none;
+}
+
+.cs-stage-row > summary,
+.cs-total-row-new {
+  display: grid;
+  grid-template-columns: 20px minmax(180px, 1fr) 80px 80px 90px 90px;
+  align-items: center;
+  padding: 9px 16px;
+  gap: 10px;
+  font-size: 12px;
+  font-family: 'SFMono-Regular', 'Consolas', 'Monaco', monospace;
+}
+
+.cs-stage-row > summary {
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.cs-stage-row > summary::-webkit-details-marker { display: none; }
+
+.cs-stage-row > summary:hover { background: #f7faff; }
+
+.cs-stage-toggle {
+  color: #4a90e2;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.cs-stage-row[open] > summary .cs-stage-toggle {
+  transform: rotate(45deg);
+}
+
+.cs-stage-label {
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.cs-stage-in,
+.cs-stage-out,
+.cs-stage-tot {
+  text-align: right;
+  color: #555;
+}
+
+.cs-stage-in { color: #4a90e2; }
+.cs-stage-out { color: #6b7c93; }
+
+.cs-stage-cost {
+  text-align: right;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.cs-stage-detail {
+  padding: 4px 16px 14px 46px;
+  background: #fafbfd;
+  border-top: 1px solid #f0f3f8;
+}
+
+.cs-total-row-new {
+  border-top: 2px solid #4a90e2;
+  background: #fafbfd;
+  font-weight: 700;
+  padding-top: 11px;
+  padding-bottom: 11px;
+}
+
+.cs-total-row-new .cs-stage-label {
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.cs-grand-cost {
+  font-size: 14px;
+  color: #4a90e2 !important;
+}

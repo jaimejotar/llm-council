@@ -2,17 +2,21 @@
 
 ![llmcouncil](header.jpg)
 
-> **Fork of [karpathy/llm-council](https://github.com/karpathy/llm-council).** This fork preserves the original Vibe Code MVP and extends it with configurable councils (UI), per-query cost estimation, a Windows launcher, and a `.env.example` template. See [Fork additions](#fork-additions) at the bottom for details. The rest of this README is Karpathy's original text, kept intact.
+> **Fork of [karpathy/llm-council](https://github.com/karpathy/llm-council).** This fork preserves the original Vibe Code MVP and extends it with configurable councils (UI), per-query cost estimation **plus real post-query token & cost tracking** (per response · per stage · per turn · per conversation), a model-freshness validator against the live OpenRouter catalog, a Windows launcher, and a `.env.example` template. See [Fork additions](#fork-additions) at the bottom for details. The rest of this README is Karpathy's original text, kept intact.
 
 ## Screenshots
 
 ![Stage 3: Final synthesis from the Chairman](docs/screenshots/04-stage3-final-synthesis.png)
 
-*The Chairman (Gemini 2.5 Pro in this run) synthesizes the council's deliberation after three stages: individual responses → anonymous peer rankings → final synthesis. See the full flow: [01 — prompt submitted](docs/screenshots/01-prompt-submitted-loading.png) · [02 — Stage 1 individual responses](docs/screenshots/02-stage1-individual-responses.png) · [03 — Stage 2 peer rankings](docs/screenshots/03-stage2-peer-rankings.png) · [04 — Stage 3 final synthesis](docs/screenshots/04-stage3-final-synthesis.png).*
+*The Chairman (Claude Opus 4.8 in this run) synthesizes the council's deliberation after three stages: individual responses → anonymous peer rankings → final synthesis. See the full flow: [01 — prompt submitted](docs/screenshots/01-prompt-submitted-loading.png) · [02 — Stage 1 individual responses](docs/screenshots/02-stage1-individual-responses.png) · [03 — Stage 2 peer rankings](docs/screenshots/03-stage2-peer-rankings.png) · [04 — Stage 3 final synthesis](docs/screenshots/04-stage3-final-synthesis.png).*
 
 ![Council manager — presets](docs/screenshots/05-council-config-presets.png)
 
 *The fork's council manager with per-query cost estimation. Three views: [Presets](docs/screenshots/05-council-config-presets.png) · [New council](docs/screenshots/06-council-config-new-council.png) · [Catalog](docs/screenshots/07-council-config-catalog.png).*
+
+![Conversation cost summary — per stage, per model, real OpenRouter costs](docs/screenshots/08-conversation-cost-summary.png)
+
+*After every turn, the fork shows real token usage and USD cost straight from OpenRouter (`usage.cost`): an inline badge under each model's response, a collapsible per-stage breakdown, and the conversation-wide summary above with ↑ input / ↓ output split. Click `+` on any stage row to expand its per-model detail (tokens, calls, USD), aggregated across all turns.*
 
 The idea of this repo is that instead of asking a question to your favorite LLM provider (e.g. OpenAI GPT 5.1, Google Gemini 3.0 Pro, Anthropic Claude Sonnet 4.5, xAI Grok 4, eg.c), you can group them into your "LLM Council". This repo is a simple, local web app that essentially looks like ChatGPT except it uses OpenRouter to send your query to multiple LLMs, it then asks them to review and rank each other's work, and finally a Chairman LLM produces the final response.
 
@@ -118,19 +122,27 @@ Original config required editing `backend/config.py` to change the council. This
 
 - **CouncilModal** — create, edit, duplicate, or delete councils (models + chairman) without touching code.
 - **NewConversationDialog** — pick which council each conversation should use.
-- Seeded with sensible defaults on first run (e.g. `exploracion_barata`, `consejo_robusto`, etc.).
+- Seeded with sensible defaults on first run (`exploracion_barata`, `consejo_premium`). On every startup, untouched legacy presets are auto-migrated to the current default model IDs (see `_LEGACY_FINGERPRINTS` in `backend/councils.py`), so persisted presets never call retired model endpoints. User-edited councils are left alone; if any of their model IDs are no longer live, a ⚠ badge appears in the CouncilModal next to that preset.
+- Default model IDs are kept current with OpenRouter (`claude-opus-4.8`, `gemini-3.1-pro-preview`, `gpt-5.5`, `grok-4.3`) — refreshed against the live OpenRouter model list, see §7 below.
 
 Endpoints added in `backend/main.py`: `GET/POST /api/councils`, `PUT/DELETE /api/councils/{id}`.
 
-### 2. Per-query cost estimation
+### 2. Cost transparency — estimate before, real after
 
-The CouncilModal shows estimated USD cost per query based on:
+**Before a query** the CouncilModal shows estimated USD cost per query:
 
-- Static catalog of OpenRouter prices in `backend/models_catalog.py` (snapshot dated `2026-05-08` — update manually when prices change upstream).
+- Catalog of OpenRouter prices in `backend/models_catalog.py`, **auto-generated** from the live OpenRouter API (`/api/v1/models`) by `scripts/check_models.py --regen-catalog`.
 - Assumed typical query of **1500 input tokens + 500 output tokens** per model.
 - Sum across all members of the council.
 
-Lets you compare a "cheap exploration" council vs a "frontier" council before launching a long conversation.
+**After a query** the chat surfaces real costs straight from OpenRouter's `usage.cost` field (USD, exact):
+
+- **Inline cost badge** under each model's response in Stage 1, 2 and 3: `↑ in · ↓ out · $cost`.
+- **Per-stage breakdown** — a collapsible `+ Ver costos del stage` reveals a per-model table (input, output, total tokens, USD).
+- **Per-turn summary** — one-line `Turno · $X · Y tokens (S1 … S2 … S3 …)` after the chairman's response.
+- **Conversation-wide summary** — a card at the end of the scroll with each stage's ↑input / ↓output / total / USD, plus a `+` per stage that expands to a per-model breakdown aggregated across every turn of the conversation.
+
+Real costs travel alongside the conversation in `data/conversations/<id>.json` (one `usage` dict per model response), so they survive reloads with zero recomputation drift. Code: [`frontend/src/utils/pricing.js`](frontend/src/utils/pricing.js), [`frontend/src/components/CostElements.jsx`](frontend/src/components/CostElements.jsx).
 
 ### 3. `start.bat` — Windows launcher
 
@@ -154,6 +166,22 @@ Full instructions in [SETUP.md §4 — Track A (Docker)](SETUP.md#4-run--track-a
 ### 6. AI-readable `SETUP.md`
 
 The fork adds a [`SETUP.md`](SETUP.md) written to be parsed and executed by AI agents (Claude Code, Cursor, Codex, etc.) as well as humans. It documents prerequisites with verification commands, both setup tracks (native + Docker), troubleshooting, and a compact "For AI agents" section with invariants the agent should not violate.
+
+### 7. Model-freshness validator — `scripts/check_models.py`
+
+OpenRouter retires model IDs regularly (e.g. `x-ai/grok-3`, `google/gemini-3-pro-preview` are gone as of 2026-05). The fork ships a standalone validator that scans every model ID referenced by the project (`config.py`, `councils.py` defaults, `models_catalog.py`, persisted `data/councils.json`) against the live OpenRouter `/api/v1/models` list and reports:
+
+- `MISSING` — would 404 on call (exits with code 1; CI-friendly).
+- `STALE` — live but a newer same-provider model exists.
+- `OK` — current.
+
+```bash
+uv run python scripts/check_models.py --suggest          # human-readable + replacement hints
+uv run python scripts/check_models.py --json             # for CI / scripts
+uv run python scripts/check_models.py --regen-catalog    # overwrite models_catalog.py from the API
+```
+
+Re-run periodically; pair it with the startup-time legacy preset migration in `backend/councils.py` to keep stale model IDs out of production runs.
 
 ### Design docs
 
